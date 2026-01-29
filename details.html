@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stacks - Expense Details</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, rgba(2, 10, 30, 0.95) 0%, rgba(15, 30, 50, 0.98) 50%, rgba(2, 10, 30, 0.95) 100%);
+            padding: 20px;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(79, 70, 229, 0.4) 0%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(80px);
+            top: -200px;
+            left: -200px;
+            z-index: 0;
+            pointer-events: none;
+        }
+        
+        body::after {
+            content: '';
+            position: fixed;
+            width: 700px;
+            height: 700px;
+            background: radial-gradient(circle, rgba(192, 38, 211, 0.3) 0%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(90px);
+            bottom: -300px;
+            right: -250px;
+            z-index: 0;
+            pointer-events: none;
+            animation: float-orb 12s infinite alternate ease-in-out;
+        }
+        
+        @keyframes float-orb {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(30px, 50px); }
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(20, 35, 60, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(79, 70, 229, 0.2);
+            position: relative;
+            z-index: 1;
+        }
+        
+        h1 {
+            color: #ffffff;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(79, 70, 229, 0.3);
+        }
+        
+        .back-button {
+            background: linear-gradient(135deg, rgba(79, 70, 229, 0.8) 0%, rgba(192, 38, 211, 0.8) 100%);
+            color: white;
+            padding: 10px 20px;
+            border: 1px solid rgba(79, 70, 229, 0.5);
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .back-button:hover {
+            background: linear-gradient(135deg, rgba(79, 70, 229, 1) 0%, rgba(192, 38, 211, 1) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.4);
+        }
+        
+        .details-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .summary-card {
+            background: rgba(79, 70, 229, 0.15);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(79, 70, 229, 0.3);
+            box-shadow: 0 8px 32px rgba(79, 70, 229, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .summary-card:hover {
+            background: rgba(79, 70, 229, 0.25);
+            border: 1px solid rgba(79, 70, 229, 0.5);
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(79, 70, 229, 0.3);
+        }
+        
+        .summary-card.avg-monthly {
+            background: rgba(192, 38, 211, 0.15);
+            border: 1px solid rgba(192, 38, 211, 0.3);
+        }
+        
+        .summary-card.avg-monthly:hover {
+            background: rgba(192, 38, 211, 0.25);
+            border: 1px solid rgba(192, 38, 211, 0.5);
+            box-shadow: 0 12px 40px rgba(192, 38, 211, 0.3);
+        }
+        
+        .summary-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+        
+        .summary-value {
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+        
+        .table-section {
+            margin-top: 30px;
+        }
+        
+        .table-section h2 {
+            color: #ffffff;
+            text-shadow: 0 0 10px rgba(79, 70, 229, 0.3);
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        
+        .table-responsive {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(20, 35, 60, 0.6);
+            box-shadow: 0 8px 32px rgba(79, 70, 229, 0.15);
+            border: 1px solid rgba(79, 70, 229, 0.3);
+        }
+        
+        thead {
+            background: rgba(79, 70, 229, 0.25);
+            color: #ffffff;
+            border-bottom: 2px solid rgba(79, 70, 229, 0.5);
+        }
+        
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: bold;
+            color: #ffffff;
+        }
+        
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(79, 70, 229, 0.2);
+            color: #e0e7ff;
+        }
+        
+        tbody tr:hover {
+            background-color: rgba(79, 70, 229, 0.15);
+        }
+        
+        .empty-state {
+            text-align: center;
+            color: #8892b0;
+            padding: 40px;
+            font-style: italic;
+        }
+        
+        .category-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 25px;
+            font-size: 0.85em;
+            font-weight: bold;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .category-Food {
+            background: rgba(79, 70, 229, 0.3);
+            color: #e0e7ff;
+        }
+        
+        .category-Transport {
+            background: rgba(192, 38, 211, 0.3);
+            color: #f0d9ff;
+        }
+        
+        .category-Utilities {
+            background: rgba(79, 70, 229, 0.4);
+            color: #e0e7ff;
+        }
+        
+        .category-Entertainment {
+            background: rgba(192, 38, 211, 0.4);
+            color: #f0d9ff;
+        }
+        
+        .category-Medical {
+            background: rgba(79, 70, 229, 0.3);
+            color: #e0e7ff;
+        }
+        
+        .category-Other {
+            background: rgba(192, 38, 211, 0.3);
+            color: #f0d9ff;
+        }
+        
+        .amount {
+            font-weight: bold;
+            color: #00d4ff;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+
+        
+        .filter-section {
+            background: rgba(79, 70, 229, 0.15);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(79, 70, 229, 0.3);
+            box-shadow: 0 8px 32px rgba(79, 70, 229, 0.2);
+        }
+        
+        .filter-section h3 {
+            color: #ffffff;
+            text-shadow: 0 0 10px rgba(79, 70, 229, 0.3);
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+        
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .filter-group label {
+            color: #c5d9f1;
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 0.95em;
+        }
+        
+        .filter-group input,
+        .filter-group select {
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(79, 70, 229, 0.3);
+            border-radius: 12px;
+            font-size: 0.95em;
+            transition: all 0.3s;
+            font-family: Arial, sans-serif;
+            color: #ffffff;
+            backdrop-filter: blur(10px);
+        }
+        
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: rgba(79, 70, 229, 0.8);
+            box-shadow: 0 0 20px rgba(79, 70, 229, 0.4);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        }
+        
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .btn-filter {
+            background: linear-gradient(135deg, rgba(79, 70, 229, 0.8) 0%, rgba(192, 38, 211, 0.8) 100%);
+            color: white;
+            padding: 10px 20px;
+            border: 1px solid rgba(79, 70, 229, 0.5);
+            border-radius: 12px;
+            font-size: 0.95em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+        }
+        
+        .btn-filter:hover {
+            background: linear-gradient(135deg, rgba(79, 70, 229, 1) 0%, rgba(192, 38, 211, 1) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.4);
+        }
+        
+        .btn-reset-filter {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            padding: 10px 20px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            font-size: 0.95em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+        }
+        
+        .btn-reset-filter:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 255, 255, 0.1);
+        }
+        
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-close {
+            background: linear-gradient(135deg, rgba(79, 70, 229, 0.8) 0%, rgba(192, 38, 211, 0.8) 100%);
+            color: white;
+            border: 1px solid rgba(79, 70, 229, 0.5);
+            backdrop-filter: blur(10px);
+        }
+        
+        .btn-close:hover {
+            background: linear-gradient(135deg, rgba(79, 70, 229, 1) 0%, rgba(192, 38, 211, 1) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.4);
+        }
+        
+        .btn-print {
+            background: linear-gradient(135deg, rgba(79, 70, 229, 0.8) 0%, rgba(192, 38, 211, 0.8) 100%);
+            color: white;
+            border: 1px solid rgba(79, 70, 229, 0.5);
+            backdrop-filter: blur(10px);
+        }
+        
+        .btn-print:hover {
+            background: linear-gradient(135deg, rgba(79, 70, 229, 1) 0%, rgba(192, 38, 211, 1) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.4);
+        }
+        
+        .monthly-report-section {
+            margin-top: 40px;
+            background: rgba(79, 70, 229, 0.15);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid rgba(79, 70, 229, 0.3);
+            box-shadow: 0 8px 32px rgba(79, 70, 229, 0.2);
+        }
+        
+        .monthly-report-section h2 {
+            color: #ffffff;
+            text-shadow: 0 0 10px rgba(79, 70, 229, 0.3);
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+        
+        .monthly-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .monthly-card {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 20px;
+            border-radius: 15px;
+            border-left: 5px solid rgba(79, 70, 229, 0.6);
+            box-shadow: 0 8px 32px rgba(79, 70, 229, 0.15);
+            transition: transform 0.3s, box-shadow 0.3s;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(79, 70, 229, 0.2);
+        }
+        
+        .monthly-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(79, 70, 229, 0.3);
+            border: 1px solid rgba(79, 70, 229, 0.4);
+        }
+        
+        .monthly-date {
+            color: #a0d9ff;
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+        
+        .monthly-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .monthly-stat-item {
+            display: flex;
+            justify-content: space-between;
+            color: #e0e7ff;
+            font-size: 0.95em;
+        }
+        
+        .monthly-stat-label {
+            font-weight: 600;
+            color: #c5d9f1;
+        }
+        
+        .monthly-stat-value {
+            color: #00d4ff;
+            font-weight: bold;
+        }
+        
+        .monthly-table-responsive {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+        
+        .monthly-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+        
+        .monthly-table thead {
+            background-color: #667eea;
+            color: white;
+        }
+        
+        .monthly-table th {
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: bold;
+        }
+        
+        .monthly-table td {
+            padding: 10px 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .monthly-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .monthly-total-row {
+            background-color: #e9ecef;
+            font-weight: bold;
+        }
+        
+        .btn-print-monthly {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.95em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 15px;
+        }
+        
+        .btn-print-monthly:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+        
+        @media print {
+            body {
+                background: white;
+            }
+            .filter-section {
+                display: none;
+            }
+            .button-group {
+                display: none;
+            }
+            .back-button {
+                display: none;
+            }
+            .monthly-card {
+                break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="back-button" onclick="window.history.back()">⬅️ Back to Tracker</button>
+        <h1>📊 Expense Details Report</h1>
+        
+        <!-- Summary Cards -->
+        <div class="details-summary">
+            <div class="summary-card">
+                <div class="summary-label">Total Expenses</div>
+                <div class="summary-value">₹ <span id="totalAmount">0.00</span></div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Number of Expenses</div>
+                <div class="summary-value"><span id="totalCount">0</span></div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Average Expense</div>
+                <div class="summary-value">₹ <span id="avgAmount">0.00</span></div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Highest Expense</div>
+                <div class="summary-value">₹ <span id="highestAmount">0.00</span></div>
+            </div>
+            <div class="summary-card avg-monthly">
+                <div class="summary-label">Average Monthly Expense</div>
+                <div class="summary-value">₹ <span id="avgMonthlyExpense">0.00</span></div>
+            </div>
+        </div>
+        
+        <!-- Table Section -->
+        <div class="table-section">
+            <h2>All Expenses</h2>
+            
+            <!-- Filter Section -->
+            <div class="filter-section">
+                <h3>🔍 Filter Expenses</h3>
+                <div class="filter-grid">
+                    <div class="filter-group">
+                        <label for="filterCategory">Category</label>
+                        <select id="filterCategory">
+                            <option value="">-- All Categories --</option>
+                            <option value="Food">Food & Dining</option>
+                            <option value="Transport">Transport</option>
+                            <option value="Utilities">Utilities</option>
+                            <option value="Entertainment">Entertainment</option>
+                            <option value="Medical">Medical</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="filterMonth">Month</label>
+                        <input type="month" id="filterMonth">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="filterMinAmount">Minimum Amount (₹)</label>
+                        <input type="number" id="filterMinAmount" placeholder="0" min="0" step="0.01">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="filterMaxAmount">Maximum Amount (₹)</label>
+                        <input type="number" id="filterMaxAmount" placeholder="No limit" min="0" step="0.01">
+                    </div>
+                </div>
+                
+                <div class="filter-buttons">
+                    <button class="btn-filter" onclick="applyFilters()">🔍 Apply Filters</button>
+                    <button class="btn-reset-filter" onclick="resetFilters()">🔄 Reset Filters</button>
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th>Notes</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody id="detailsTableBody">
+                        <tr class="empty-state">
+                            <td colspan="5">No expenses to display</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Monthly Expenditure Report Section -->
+        <div class="monthly-report-section">
+            <h2>📅 Monthly Expenditure Report</h2>
+            
+            <div class="monthly-cards" id="monthlyCardsContainer">
+                <!-- Monthly cards will be generated here by JavaScript -->
+            </div>
+            
+            <div class="monthly-table-responsive">
+                <table class="monthly-table">
+                    <thead>
+                        <tr>
+                            <th>Month</th>
+                            <th>Total Expenses</th>
+                            <th>Number of Transactions</th>
+                            <th>Daily Average (₹)</th>
+                            <th>Highest Expense</th>
+                        </tr>
+                    </thead>
+                    <tbody id="monthlyTableBody">
+                        
+                    </tbody>
+                </table>
+            </div>
+            
+            <button class="btn-print-monthly" onclick="printMonthlyReport()">📄 Print Monthly Report</button>
+        </div>
+        
+        <!-- Button Group -->
+        <div class="button-group">
+            <button class="btn-print" onclick="window.print()">🖨️ Print Report</button>
+            <button class="btn-close" onclick="window.close()">❌ Close Window</button>
+        </div>
+    </div>
+
+    <script>
+        let allExpenses = [];
+        
+        // Function to get category emoji
+        function getCategoryEmoji(category) {
+            const emojis = {
+                'Food': '🍔',
+                'Transport': '🚗',
+                'Utilities': '💡',
+                'Entertainment': '🎬',
+                'Medical': '🏥',
+                'Other': '📦'
+            };
+            return emojis[category] || '💰';
+        }
+
+        // to get days completed in current month
+        function getDaysCompletedInCurrentMonth() {
+            const today = new Date();
+            return today.getDate();
+        }
+
+        // Function to update summary with filtered data
+        function updateSummary(expenses) {
+            const totalAmount = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+            const count = expenses.length;
+            const daysCompleted = getDaysCompletedInCurrentMonth();
+            const average = daysCompleted > 0 ? totalAmount / daysCompleted : 0;
+            const highest = count > 0 ? Math.max(...expenses.map(e => e.amount)) : 0;
+            
+            document.getElementById('totalAmount').textContent = totalAmount.toFixed(2);
+            document.getElementById('totalCount').textContent = count;
+            document.getElementById('avgAmount').textContent = average.toFixed(2);
+            document.getElementById('highestAmount').textContent = highest.toFixed(2);
+        }
+
+        // Function to update average monthly expense
+        function updateAvgMonthlyExpense(monthlyData) {
+            if (monthlyData.length === 0) {
+                document.getElementById('avgMonthlyExpense').textContent = '0.00';
+                return;
+            }
+            
+            const totalMonthlyExpenses = monthlyData.reduce((sum, month) => sum + month.total, 0);
+            const avgMonthlyExpense = totalMonthlyExpenses / monthlyData.length;
+            document.getElementById('avgMonthlyExpense').textContent = avgMonthlyExpense.toFixed(2);
+        }
+
+        // Function to display expenses
+        function displayExpenses(expenses) {
+            const tableBody = document.getElementById('detailsTableBody');
+            
+            if (expenses.length === 0) {
+                tableBody.innerHTML = '<tr class="empty-state"><td colspan="5">No expenses match the selected filters</td></tr>';
+                updateSummary([]);
+                return;
+            }
+            
+            tableBody.innerHTML = expenses.map(expense => `
+                <tr>
+                    <td>${expense.date}</td>
+                    <td><span class="category-badge category-${expense.category}">${getCategoryEmoji(expense.category)} ${expense.category}</span></td>
+                    <td>${expense.description}</td>
+                    <td>${expense.notes || '-'}</td>
+                    <td class="amount">₹ ${expense.amount.toFixed(2)}</td>
+                </tr>
+            `).join('');
+            
+            updateSummary(expenses);
+        }
+
+        // Function to apply filters
+        function applyFilters() {
+            const category = document.getElementById('filterCategory').value;
+            const month = document.getElementById('filterMonth').value;
+            const minAmount = parseFloat(document.getElementById('filterMinAmount').value) || 0;
+            const maxAmount = parseFloat(document.getElementById('filterMaxAmount').value) || Infinity;
+            
+            let filteredExpenses = allExpenses.filter(expense => {
+                // Filter by category
+                if (category && expense.category !== category) {
+                    return false;
+                }
+                
+                // Filter by month (YYYY-MM format)
+                if (month && !expense.date.startsWith(month)) {
+                    return false;
+                }
+                
+                // Filter by amount range
+                if (expense.amount < minAmount || expense.amount > maxAmount) {
+                    return false;
+                }
+                
+                return true;
+            });
+            
+            displayExpenses(filteredExpenses);
+        }
+
+        // Function to reset filters
+        function resetFilters() {
+            document.getElementById('filterCategory').value = '';
+            document.getElementById('filterMonth').value = '';
+            document.getElementById('filterMinAmount').value = '';
+            document.getElementById('filterMaxAmount').value = '';
+            
+            displayExpenses(allExpenses);
+        }
+
+        // Function to get days completed in a month
+        function getDaysCompletedInMonth(monthStr) {
+            const [year, month] = monthStr.split('-');
+            const today = new Date();
+            const currentYear = today.getFullYear();
+            const currentMonth = String(today.getMonth() + 1).padStart(2, '0');
+            
+            // In ase of past month
+            if (year + month < currentYear + currentMonth) {
+                const lastDay = new Date(year, month, 0).getDate();
+                return lastDay;
+            }
+            
+            // In case of current month
+            return today.getDate();
+        }
+
+        // details of monthly exp
+        function getMonthlyBreakdown(expenses) {
+            const monthlyData = {};
+            
+            expenses.forEach(expense => {
+                const monthKey = expense.date.substring(0, 7); // YYYY-MM format
+                
+                if (!monthlyData[monthKey]) {
+                    monthlyData[monthKey] = {
+                        month: monthKey,
+                        total: 0,
+                        count: 0,
+                        expenses: [],
+                        max: 0
+                    };
+                }
+                
+                monthlyData[monthKey].total += expense.amount;
+                monthlyData[monthKey].count += 1;
+                monthlyData[monthKey].expenses.push(expense);
+                monthlyData[monthKey].max = Math.max(monthlyData[monthKey].max, expense.amount);
+            });
+            
+            // Calculating daily avg
+            Object.values(monthlyData).forEach(month => {
+                const daysCompleted = getDaysCompletedInMonth(month.month);
+                month.dailyAverage = month.total / daysCompleted;
+                month.daysCompleted = daysCompleted;
+            });
+            
+            return Object.values(monthlyData).sort((a, b) => b.month.localeCompare(a.month));
+        }
+
+        // to format month name
+        function formatMonthName(monthStr) {
+            const date = new Date(monthStr + '-01');
+            const options = { year: 'numeric', month: 'long' };
+            return date.toLocaleDateString('en-US', options);
+        }
+
+        // making cards month wise 
+        function generateMonthlyCards(monthlyData) {
+            const container = document.getElementById('monthlyCardsContainer');
+            
+            if (monthlyData.length === 0) {
+                container.innerHTML = '<p style="color: #999; font-style: italic;">No monthly data to display</p>';
+                return;
+            }
+            
+            container.innerHTML = monthlyData.map(month => `
+                <div class="monthly-card">
+                    <div class="monthly-date">${formatMonthName(month.month)}</div>
+                    <div class="monthly-stats">
+                        <div class="monthly-stat-item">
+                            <span class="monthly-stat-label">Total Spent:</span>
+                            <span class="monthly-stat-value">₹ ${month.total.toFixed(2)}</span>
+                        </div>
+                        <div class="monthly-stat-item">
+                            <span class="monthly-stat-label">Transactions:</span>
+                            <span class="monthly-stat-value">${month.count}</span>
+                        </div>
+                        <div class="monthly-stat-item">
+                            <span class="monthly-stat-label">Daily Average:</span>
+                            <span class="monthly-stat-value">₹ ${month.dailyAverage.toFixed(2)}</span>
+                        </div>
+                        <div class="monthly-stat-item">
+                            <span class="monthly-stat-label">Days in Month:</span>
+                            <span class="monthly-stat-value">${month.daysCompleted}</span>
+                        </div>
+                        <div class="monthly-stat-item">
+                            <span class="monthly-stat-label">Highest Expense:</span>
+                            <span class="monthly-stat-value">₹ ${month.max.toFixed(2)}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // to make monthly table
+        function generateMonthlyTable(monthlyData) {
+            const tableBody = document.getElementById('monthlyTableBody');
+            
+            if (monthlyData.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #999;">No monthly data to display</td></tr>';
+                return;
+            }
+            
+            let totalOfAll = 0;
+            let countOfAll = 0;
+            let totalDailyAverages = 0;
+            
+            const tableRows = monthlyData.map(month => {
+                totalOfAll += month.total;
+                countOfAll += month.count;
+                totalDailyAverages += month.dailyAverage;
+                
+                return `
+                    <tr>
+                        <td><strong>${formatMonthName(month.month)}</strong></td>
+                        <td class="amount">₹ ${month.total.toFixed(2)}</td>
+                        <td>${month.count}</td>
+                        <td class="amount">₹ ${month.dailyAverage.toFixed(2)}</td>
+                        <td class="amount">₹ ${month.max.toFixed(2)}</td>
+                    </tr>
+                `;
+            }).join('');
+            
+            // Add total row
+            const avgOfMonthlyAverage = totalDailyAverages / monthlyData.length;
+            const totalRow = `
+                <tr class="monthly-total-row">
+                    <td>TOTAL / AVERAGE</td>
+                    <td class="amount">₹ ${totalOfAll.toFixed(2)}</td>
+                    <td>${countOfAll}</td>
+                    <td class="amount">₹ ${avgOfMonthlyAverage.toFixed(2)}</td>
+                    <td class="amount">₹ ${Math.max(...monthlyData.map(m => m.max)).toFixed(2)}</td>
+                </tr>
+            `;
+            
+            tableBody.innerHTML = tableRows + totalRow;
+        }
+
+        // Function to print monthly report
+        function printMonthlyReport() {
+            const monthlyData = getMonthlyBreakdown(allExpenses);
+            
+            if (monthlyData.length === 0) {
+                alert('No expenses to print');
+                return;
+            }
+            
+            // Open print dialog
+            window.print();
+        }
+
+        // Load expenses from localStorage
+        function loadExpenseDetails() {
+            const expenseData = localStorage.getItem('expenseData');
+            
+            if (!expenseData) {
+                document.getElementById('detailsTableBody').innerHTML = '<tr class="empty-state"><td colspan="5">No expenses to display</td></tr>';
+                return;
+            }
+            
+            allExpenses = JSON.parse(expenseData);
+            
+            if (allExpenses.length === 0) {
+                document.getElementById('detailsTableBody').innerHTML = '<tr class="empty-state"><td colspan="5">No expenses to display</td></tr>';
+                return;
+            }
+            
+            // Sort by date (newest first)
+            allExpenses.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            // Display all expenses initially
+            displayExpenses(allExpenses);
+            
+            // Generate monthly reports
+            const monthlyData = getMonthlyBreakdown(allExpenses);
+            generateMonthlyCards(monthlyData);
+            generateMonthlyTable(monthlyData);
+            updateAvgMonthlyExpense(monthlyData);
+        }
+
+        // Load expenses when page loads
+        window.addEventListener('DOMContentLoaded', loadExpenseDetails);
+    </script>
+</body>
+</html>
